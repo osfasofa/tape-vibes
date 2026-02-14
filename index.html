@@ -1,364 +1,689 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tape Speed Effect Simulator</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background: #1a1a1a;
-            color: #fff;
-        }
-        .container {
-            background: #2a2a2a;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        }
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            color: #ff6b35;
-        }
-        .controls {
-            display: grid;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        .control-group {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        label {
-            min-width: 120px;
-            font-weight: bold;
-        }
-        input[type="range"] {
-            flex: 1;
-            height: 8px;
-            background: #444;
-            border-radius: 4px;
-            outline: none;
-        }
-        input[type="range"]::-webkit-slider-thumb {
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            background: #ff6b35;
-            border-radius: 50%;
-            cursor: pointer;
-        }
-        .value-display {
-            min-width: 60px;
-            text-align: right;
-            font-family: monospace;
-            background: #333;
-            padding: 5px 10px;
-            border-radius: 4px;
-        }
-        button {
-            padding: 12px 24px;
-            margin: 5px;
-            background: #ff6b35;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background 0.2s;
-        }
-        button:hover {
-            background: #e55a2e;
-        }
-        button:disabled {
-            background: #666;
-            cursor: not-allowed;
-        }
-        .file-input {
-            margin-bottom: 20px;
-        }
-        .status {
-            text-align: center;
-            margin: 20px 0;
-            padding: 10px;
-            background: #333;
-            border-radius: 6px;
-        }
-        select {
-            padding: 8px;
-            background: #333;
-            color: white;
-            border: 1px solid #555;
-            border-radius: 4px;
-        }
-        
-        /* Synthesizer and Keyboard Styles */
-        .synth-controls {
-            margin-top: 30px;
-            padding: 20px;
-            background: #333;
-            border-radius: 10px;
-        }
-        
-        .keyboard-container {
-            margin-top: 30px;
-            padding: 20px;
-            background: #333;
-            border-radius: 10px;
-            text-align: center;
-        }
-        
-        .keyboard {
-            display: flex;
-            justify-content: center;
-            margin: 20px 0;
-            perspective: 1000px;
-            transform-style: preserve-3d;
-        }
-        
-        .key {
-            position: relative;
-            cursor: pointer;
-            user-select: none;
-            transition: all 0.1s ease;
-            transform-style: preserve-3d;
-        }
-        
-        .key.white {
-            width: 40px;
-            height: 200px;
-            background: linear-gradient(to bottom, #ffffff 0%, #f0f0f0 100%);
-            border: 1px solid #ccc;
-            border-radius: 0 0 8px 8px;
-            margin: 0 1px;
-            box-shadow: 
-                0 4px 8px rgba(0,0,0,0.3),
-                inset 0 1px 0 rgba(255,255,255,0.8),
-                inset 0 -1px 0 rgba(0,0,0,0.1);
-            transform: rotateX(-5deg);
-        }
-        
-        .key.black {
-            width: 28px;
-            height: 130px;
-            background: linear-gradient(to bottom, #2a2a2a 0%, #000000 100%);
-            border: 1px solid #000;
-            border-radius: 0 0 6px 6px;
-            margin: 0 -14px;
-            z-index: 2;
-            box-shadow: 
-                0 6px 12px rgba(0,0,0,0.6),
-                inset 0 1px 0 rgba(255,255,255,0.1),
-                inset 0 -1px 0 rgba(0,0,0,0.8);
-            transform: rotateX(-5deg) translateZ(10px);
-        }
-        
-        .key:hover {
-            transform: rotateX(-5deg) translateZ(5px) scale(1.02);
-        }
-        
-        .key.white:hover {
-            background: linear-gradient(to bottom, #f8f8f8 0%, #e8e8e8 100%);
-        }
-        
-        .key.black:hover {
-            background: linear-gradient(to bottom, #404040 0%, #1a1a1a 100%);
-        }
-        
-        .key.pressed {
-            transform: rotateX(-5deg) translateZ(2px) scale(0.98) !important;
-            transition: all 0.05s ease;
-        }
-        
-        .key.white.pressed {
-            background: linear-gradient(to bottom, #e0e0e0 0%, #d0d0d0 100%);
-            box-shadow: 
-                0 2px 4px rgba(0,0,0,0.4),
-                inset 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .key.black.pressed {
-            background: linear-gradient(to bottom, #1a1a1a 0%, #0a0a0a 100%);
-            box-shadow: 
-                0 3px 6px rgba(0,0,0,0.8),
-                inset 0 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        .key-label {
-            position: absolute;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 10px;
-            font-weight: bold;
-            color: #666;
-            pointer-events: none;
-        }
-        
-        .key.black .key-label {
-            color: #aaa;
-            bottom: 8px;
-        }
-        
-        .keyboard-info {
-            margin-top: 15px;
-            color: #999;
-            font-size: 14px;
-        }
-        
-        /* Responsive keyboard */
-        @media (max-width: 768px) {
-            .keyboard {
-                transform: scale(0.8);
-                overflow-x: auto;
-            }
-            
-            .key.white {
-                width: 35px;
-                height: 180px;
-            }
-            
-            .key.black {
-                width: 25px;
-                height: 115px;
-                margin: 0 -12px;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TAPE VIBES</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='10' cy='16' r='8' fill='%23333' stroke='%23666' stroke-width='1'/><circle cx='22' cy='16' r='6' fill='%23333' stroke='%23666' stroke-width='1'/><circle cx='10' cy='16' r='3' fill='%23222'/><circle cx='22' cy='16' r='2' fill='%23222'/><line x1='18' y1='16' x2='14' y2='22' stroke='%232d1810' stroke-width='2'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --body: #1a1a1a;
+      --panel: #2a2520;
+      --display-bg: #0a0a08;
+      --amber: #ff6a00;
+      --amber-dim: #994400;
+      --green: #00ff41;
+      --red: #ff2020;
+      --track1: #ff6a00;
+      --track2: #00ff41;
+      --track3: #40a0ff;
+      --track4: #ff4080;
+      --text: #ddd0c0;
+      --text-dim: #6a6050;
+      --knob-bg: #333;
+      --btn-bg: #3a3530;
+      --btn-active: #4a4540;
+      --font: 'Space Mono', monospace;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--body);
+      color: var(--text);
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+
+    /* === HARDWARE CASING === */
+    .machine {
+      width: 900px;
+      max-width: 100vw;
+      background: var(--panel);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow:
+        0 8px 32px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,0.05),
+        inset 0 -1px 0 rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Title strip */
+    .title-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 8px;
+    }
+    .title-strip h1 {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+    .title-strip .model {
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 2px;
+    }
+
+    /* === CRT DISPLAY === */
+    .display-bezel {
+      background: #111;
+      border-radius: 12px;
+      padding: 6px;
+      box-shadow:
+        inset 0 2px 8px rgba(0,0,0,0.8),
+        0 1px 0 rgba(255,255,255,0.04);
+    }
+    #tape-display {
+      display: block;
+      width: 100%;
+      height: 400px;
+      background: var(--display-bg);
+      border-radius: 8px;
+    }
+
+    /* === CONTROLS PANEL === */
+    .controls-panel {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    /* === TRANSPORT BUTTONS === */
+    .transport-section {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .transport-btn {
+      width: 48px;
+      height: 40px;
+      background: var(--btn-bg);
+      border: 1px solid #555;
+      border-radius: 6px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      box-shadow:
+        0 3px 6px rgba(0,0,0,0.4),
+        inset 0 1px 0 rgba(255,255,255,0.06);
+      transition: all 0.1s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .transport-btn:active, .transport-btn.active {
+      transform: translateY(1px);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+      background: var(--btn-active);
+    }
+    .transport-btn .icon {
+      font-size: 14px;
+      line-height: 1;
+    }
+    .transport-btn .label {
+      font-size: 7px;
+      letter-spacing: 1px;
+    }
+    .transport-btn .led {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: #440000;
+      transition: all 0.2s;
+    }
+    .transport-btn .led.on {
+      background: var(--red);
+      box-shadow: 0 0 8px var(--red);
+    }
+    #btn-record {
+      border-color: #553333;
+    }
+
+    /* === KNOBS === */
+    .knobs-section {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .knob-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .knob-label {
+      font-size: 8px;
+      letter-spacing: 1.5px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+    .knob {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #555, #2a2a2a 70%);
+      border: 2px solid #444;
+      cursor: grab;
+      position: relative;
+      box-shadow:
+        0 2px 8px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    .knob:active, .knob.active {
+      cursor: grabbing;
+      border-color: var(--amber-dim);
+    }
+    .knob-indicator {
+      position: absolute;
+      top: 4px;
+      left: 50%;
+      width: 2px;
+      height: 14px;
+      background: var(--amber);
+      margin-left: -1px;
+      border-radius: 1px;
+      transform-origin: center 18px;
+      box-shadow: 0 0 4px var(--amber);
+    }
+    .knob-value {
+      font-size: 9px;
+      color: var(--amber-dim);
+      text-shadow: 0 0 6px rgba(255,106,0,0.3);
+    }
+
+    /* === TRACK SELECTORS === */
+    .track-section {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+    .track-section-label {
+      font-size: 7px;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      writing-mode: vertical-lr;
+      transform: rotate(180deg);
+      margin-right: 4px;
+    }
+    .track-btn {
+      width: 32px;
+      height: 28px;
+      background: var(--btn-bg);
+      border: 1px solid #444;
+      border-radius: 4px;
+      color: var(--text-dim);
+      font-family: var(--font);
+      font-size: 9px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.1s;
+    }
+    .track-btn.armed {
+      border-color: var(--red);
+      color: var(--red);
+      box-shadow: 0 0 6px rgba(255,32,32,0.3);
+    }
+    .track-btn.muted {
+      opacity: 0.4;
+    }
+    .track-btn:nth-child(2) { color: var(--track1); border-color: color-mix(in srgb, var(--track1) 30%, #444); }
+    .track-btn:nth-child(3) { color: var(--track2); border-color: color-mix(in srgb, var(--track2) 30%, #444); }
+    .track-btn:nth-child(4) { color: var(--track3); border-color: color-mix(in srgb, var(--track3) 30%, #444); }
+    .track-btn:nth-child(5) { color: var(--track4); border-color: color-mix(in srgb, var(--track4) 30%, #444); }
+    .track-btn.armed:nth-child(2) { box-shadow: 0 0 6px rgba(255,106,0,0.4); }
+    .track-btn.armed:nth-child(3) { box-shadow: 0 0 6px rgba(0,255,65,0.4); }
+    .track-btn.armed:nth-child(4) { box-shadow: 0 0 6px rgba(64,160,255,0.4); }
+    .track-btn.armed:nth-child(5) { box-shadow: 0 0 6px rgba(255,64,128,0.4); }
+
+    /* === MODE SWITCHES === */
+    .mode-section {
+      display: flex;
+      gap: 4px;
+      margin-left: auto;
+    }
+    .mode-btn {
+      padding: 6px 14px;
+      background: var(--btn-bg);
+      border: 1px solid #444;
+      border-radius: 4px;
+      color: var(--text-dim);
+      font-family: var(--font);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+    .mode-btn.active {
+      background: var(--btn-active);
+      color: var(--amber);
+      border-color: var(--amber-dim);
+      box-shadow: 0 0 8px rgba(255,106,0,0.2);
+    }
+
+    /* === UTILITY BUTTONS === */
+    .util-section {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .util-btn {
+      padding: 6px 10px;
+      background: var(--btn-bg);
+      border: 1px solid #444;
+      border-radius: 4px;
+      color: var(--text-dim);
+      font-family: var(--font);
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+    .util-btn.active {
+      color: var(--green);
+      border-color: color-mix(in srgb, var(--green) 40%, #444);
+    }
+
+    /* === MODE PANELS === */
+    .mode-panel {
+      min-height: 120px;
+      transition: opacity 0.2s;
+    }
+    .mode-panel.hidden {
+      display: none;
+    }
+
+    /* Tape panel */
+    #tape-panel .tape-info {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      font-size: 10px;
+      color: var(--text-dim);
+      padding: 8px;
+    }
+    #tape-panel .tape-info .hint {
+      font-size: 9px;
+      color: var(--text-dim);
+      opacity: 0.6;
+    }
+    .tape-actions {
+      display: flex;
+      gap: 4px;
+    }
+    .tape-name {
+      font-size: 10px;
+      color: var(--amber-dim);
+    }
+
+    /* === SYNTH PANEL === */
+    #synth-panel {
+      padding: 8px;
+    }
+    .synth-controls-row {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    .synth-param {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .synth-param label {
+      font-size: 8px;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+    .synth-param input[type="range"] {
+      width: 100px;
+      height: 4px;
+      appearance: none;
+      background: #333;
+      border-radius: 2px;
+      outline: none;
+    }
+    .synth-param input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 12px;
+      height: 12px;
+      background: var(--amber);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 4px rgba(255,106,0,0.4);
+    }
+    .synth-param .param-val {
+      font-size: 9px;
+      color: var(--amber-dim);
+    }
+    .synth-param select {
+      background: #333;
+      color: var(--text);
+      border: 1px solid #555;
+      border-radius: 3px;
+      padding: 3px 6px;
+      font-family: var(--font);
+      font-size: 10px;
+    }
+
+    /* Piano */
+    .piano-container {
+      margin-top: 8px;
+      overflow-x: auto;
+      padding: 4px 0;
+    }
+    #piano {
+      display: flex;
+      justify-content: center;
+    }
+    .piano-octave {
+      position: relative;
+      display: flex;
+    }
+    .piano-key {
+      position: relative;
+      cursor: pointer;
+      user-select: none;
+    }
+    .piano-key.white {
+      width: 36px;
+      height: 120px;
+      background: linear-gradient(to bottom, #eee, #d8d8d8);
+      border: 1px solid #aaa;
+      border-radius: 0 0 4px 4px;
+      z-index: 1;
+    }
+    .piano-key.black {
+      position: absolute;
+      width: 24px;
+      height: 78px;
+      background: linear-gradient(to bottom, #333, #111);
+      border: 1px solid #000;
+      border-radius: 0 0 3px 3px;
+      z-index: 2;
+      top: 0;
+    }
+    .piano-key.white.pressed {
+      background: linear-gradient(to bottom, #ccc, #bbb);
+      transform: translateY(1px);
+    }
+    .piano-key.black.pressed {
+      background: linear-gradient(to bottom, #222, #000);
+      transform: translateY(1px);
+    }
+    .piano-key-label {
+      position: absolute;
+      bottom: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 7px;
+      color: #999;
+      pointer-events: none;
+    }
+    .piano-key.black .piano-key-label {
+      color: #666;
+    }
+
+    /* === MIXER PANEL === */
+    #mixer-panel {
+      padding: 8px;
+    }
+    .mixer-tracks {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+    }
+    .mixer-channel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .mixer-channel-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    .mixer-fader {
+      writing-mode: vertical-lr;
+      direction: rtl;
+      width: 4px;
+      height: 80px;
+      appearance: none;
+      background: #333;
+      border-radius: 2px;
+      outline: none;
+    }
+    .mixer-fader::-webkit-slider-thumb {
+      appearance: none;
+      width: 20px;
+      height: 8px;
+      background: #666;
+      border-radius: 2px;
+      cursor: pointer;
+      border: 1px solid #888;
+    }
+
+    /* Drag over state */
+    #tape-display.drag-over {
+      outline: 2px dashed var(--amber);
+      outline-offset: -4px;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎵 Tape Speed Effect Simulator</h1>
-        
-        <div class="file-input">
-            <input type="file" id="audioFile" accept="audio/*">
-            <button id="loadDemo">Load Demo Audio</button>
-        </div>
-        
-        <div class="status" id="status">Load an audio file to begin</div>
-        
-        <div class="controls">
-            <div class="control-group">
-                <label>Speed:</label>
-                <input type="range" id="speed" min="0.1" max="3" step="0.01" value="1">
-                <span class="value-display" id="speedValue">1.00x</span>
-            </div>
-            
-            <div class="control-group">
-                <label>Flutter Amount:</label>
-                <input type="range" id="flutter" min="0" max="0.05" step="0.001" value="0.005">
-                <span class="value-display" id="flutterValue">0.5%</span>
-            </div>
-            
-            <div class="control-group">
-                <label>Flutter Rate:</label>
-                <input type="range" id="flutterRate" min="0.5" max="15" step="0.1" value="6">
-                <span class="value-display" id="flutterRateValue">6.0 Hz</span>
-            </div>
-            
-            <div class="control-group">
-                <label>Interpolation:</label>
-                <select id="interpolation">
-                    <option value="linear">Linear</option>
-                    <option value="cubic">Cubic (Hermite)</option>
-                </select>
-            </div>
-            
-            <div class="control-group">
-                <label>Tape Saturation:</label>
-                <input type="range" id="saturation" min="0" max="1" step="0.01" value="0.2">
-                <span class="value-display" id="saturationValue">20%</span>
-            </div>
-            
-            <div class="control-group">
-                <label>Channel Crosstalk:</label>
-                <input type="range" id="crosstalk" min="0" max="0.1" step="0.005" value="0.02">
-                <span class="value-display" id="crosstalkValue">2%</span>
-            </div>
-            
-            <div class="control-group">
-                <label>Stereo Width:</label>
-                <input type="range" id="stereoWidth" min="0" max="2" step="0.1" value="1">
-                <span class="value-display" id="stereoWidthValue">100%</span>
-            </div>
-        </div>
-        
-        <div style="text-align: center;">
-            <button id="play" disabled>▶ Play</button>
-            <button id="stop" disabled>⏹ Stop</button>
-            <button id="tapeStop" disabled>📼 Tape Stop Effect</button>
-            <button id="synthMode" disabled>🎹 Synth Mode</button>
-        </div>
-        
-        <!-- Synthesizer Controls -->
-        <div class="synth-controls" id="synthControls" style="display: none;">
-            <h2>🎛️ Synthesizer</h2>
-            <div class="controls">
-                <div class="control-group">
-                    <label>Waveform:</label>
-                    <select id="waveform">
-                        <option value="sawtooth">Sawtooth</option>
-                        <option value="square">Square</option>
-                        <option value="sine">Sine</option>
-                        <option value="triangle">Triangle</option>
-                    </select>
-                </div>
-                
-                <div class="control-group">
-                    <label>Attack:</label>
-                    <input type="range" id="attack" min="0.01" max="2" step="0.01" value="0.1">
-                    <span class="value-display" id="attackValue">0.10s</span>
-                </div>
-                
-                <div class="control-group">
-                    <label>Decay:</label>
-                    <input type="range" id="decay" min="0.01" max="2" step="0.01" value="0.3">
-                    <span class="value-display" id="decayValue">0.30s</span>
-                </div>
-                
-                <div class="control-group">
-                    <label>Sustain:</label>
-                    <input type="range" id="sustain" min="0" max="1" step="0.01" value="0.6">
-                    <span class="value-display" id="sustainValue">60%</span>
-                </div>
-                
-                <div class="control-group">
-                    <label>Release:</label>
-                    <input type="range" id="release" min="0.01" max="3" step="0.01" value="0.8">
-                    <span class="value-display" id="releaseValue">0.80s</span>
-                </div>
-                
-                <div class="control-group">
-                    <label>Filter Cutoff:</label>
-                    <input type="range" id="cutoff" min="100" max="8000" step="50" value="2000">
-                    <span class="value-display" id="cutoffValue">2000Hz</span>
-                </div>
-                
-                <div class="control-group">
-                    <label>Resonance:</label>
-                    <input type="range" id="resonance" min="0" max="30" step="0.5" value="5">
-                    <span class="value-display" id="resonanceValue">5</span>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 3D Piano Keyboard -->
-        <div class="keyboard-container" id="keyboardContainer" style="display: none;">
-            <h2>🎹 Interactive Piano</h2>
-            <div class="keyboard" id="keyboard">
-                <!-- Keys will be generated by JavaScript -->
-            </div>
-            <div class="keyboard-info">
-                <p>Click keys to play • Supports multiple touches • QWERTY keyboard mapping</p>
-            </div>
-        </div>
+  <div class="machine">
+    <!-- Title -->
+    <div class="title-strip">
+      <h1>Tape Vibes</h1>
+      <span class="model">4-Track Cassette Recorder</span>
     </div>
 
-    <script type="module" src="main.js"></script>
+    <!-- CRT Display -->
+    <div class="display-bezel">
+      <canvas id="tape-display"></canvas>
+    </div>
+
+    <!-- Main Controls Row -->
+    <div class="controls-panel">
+      <!-- Transport -->
+      <div class="transport-section">
+        <button class="transport-btn" id="btn-rewind">
+          <span class="icon">&#9194;</span>
+          <span class="label">REW</span>
+        </button>
+        <button class="transport-btn" id="btn-stop">
+          <span class="icon">&#9632;</span>
+          <span class="label">STOP</span>
+        </button>
+        <button class="transport-btn" id="btn-play">
+          <span class="icon">&#9654;</span>
+          <span class="label">PLAY</span>
+        </button>
+        <button class="transport-btn" id="btn-record">
+          <span class="led"></span>
+          <span class="icon">&#9679;</span>
+          <span class="label">REC</span>
+        </button>
+        <button class="transport-btn" id="btn-ffwd">
+          <span class="icon">&#9193;</span>
+          <span class="label">FF</span>
+        </button>
+        <button class="transport-btn" id="btn-tape-stop">
+          <span class="icon">~</span>
+          <span class="label">T.STP</span>
+        </button>
+      </div>
+
+      <!-- Knobs -->
+      <div class="knobs-section">
+        <div class="knob-group">
+          <span class="knob-label">SPEED</span>
+          <div class="knob" id="knob-speed"><div class="knob-indicator"></div></div>
+          <span class="knob-value">1.00x</span>
+        </div>
+        <div class="knob-group">
+          <span class="knob-label">SAT</span>
+          <div class="knob" id="knob-saturation"><div class="knob-indicator"></div></div>
+          <span class="knob-value">20%</span>
+        </div>
+        <div class="knob-group">
+          <span class="knob-label">FLUTTER</span>
+          <div class="knob" id="knob-flutter"><div class="knob-indicator"></div></div>
+          <span class="knob-value">0.5%</span>
+        </div>
+        <div class="knob-group">
+          <span class="knob-label">WIDTH</span>
+          <div class="knob" id="knob-stereo"><div class="knob-indicator"></div></div>
+          <span class="knob-value">100%</span>
+        </div>
+      </div>
+
+      <!-- Track Selectors -->
+      <div class="track-section">
+        <span class="track-section-label">ARM</span>
+        <button class="track-btn armed" id="track-arm-0">T1</button>
+        <button class="track-btn" id="track-arm-1">T2</button>
+        <button class="track-btn" id="track-arm-2">T3</button>
+        <button class="track-btn" id="track-arm-3">T4</button>
+      </div>
+
+      <!-- Utility -->
+      <div class="util-section">
+        <button class="util-btn" id="btn-mic">MIC</button>
+        <button class="util-btn" id="btn-reverse">REV</button>
+      </div>
+
+      <!-- Mode Switches -->
+      <div class="mode-section">
+        <button class="mode-btn active" id="mode-tape">TAPE</button>
+        <button class="mode-btn" id="mode-synth">SYNTH</button>
+        <button class="mode-btn" id="mode-mixer">MIXER</button>
+      </div>
+    </div>
+
+    <!-- Mode Panels -->
+    <!-- Tape Mode (default) -->
+    <div class="mode-panel" id="tape-panel">
+      <div class="tape-info">
+        <span class="hint">Drop an audio file on the display to import. [Space] play/stop, [R] record.</span>
+        <div class="tape-actions">
+          <button class="util-btn" id="btn-save">SAVE</button>
+          <button class="util-btn" id="btn-load">LOAD</button>
+          <button class="util-btn" id="btn-clear-track">CLR TRK</button>
+          <button class="util-btn" id="btn-export">EXPORT</button>
+          <input type="file" id="file-import" accept="audio/*" style="display:none">
+          <button class="util-btn" id="btn-import-file">IMPORT</button>
+        </div>
+        <span class="tape-name" id="tape-name"></span>
+      </div>
+    </div>
+
+    <!-- Synth Mode -->
+    <div class="mode-panel hidden" id="synth-panel">
+      <div class="synth-controls-row">
+        <div class="synth-param">
+          <label>WAVE</label>
+          <select id="synth-waveform">
+            <option value="sawtooth">SAW</option>
+            <option value="square">SQR</option>
+            <option value="sine">SIN</option>
+            <option value="triangle">TRI</option>
+          </select>
+        </div>
+        <div class="synth-param">
+          <label>ATTACK</label>
+          <input type="range" id="synth-attack" min="0.01" max="2" step="0.01" value="0.1">
+          <span class="param-val" id="synth-attack-val">0.10s</span>
+        </div>
+        <div class="synth-param">
+          <label>DECAY</label>
+          <input type="range" id="synth-decay" min="0.01" max="2" step="0.01" value="0.3">
+          <span class="param-val" id="synth-decay-val">0.30s</span>
+        </div>
+        <div class="synth-param">
+          <label>SUSTAIN</label>
+          <input type="range" id="synth-sustain" min="0" max="1" step="0.01" value="0.6">
+          <span class="param-val" id="synth-sustain-val">60%</span>
+        </div>
+        <div class="synth-param">
+          <label>RELEASE</label>
+          <input type="range" id="synth-release" min="0.01" max="3" step="0.01" value="0.8">
+          <span class="param-val" id="synth-release-val">0.80s</span>
+        </div>
+        <div class="knob-group">
+          <span class="knob-label">CUTOFF</span>
+          <div class="knob" id="knob-cutoff"><div class="knob-indicator"></div></div>
+          <span class="knob-value">2000Hz</span>
+        </div>
+        <div class="knob-group">
+          <span class="knob-label">RES</span>
+          <div class="knob" id="knob-resonance"><div class="knob-indicator"></div></div>
+          <span class="knob-value">5.0</span>
+        </div>
+      </div>
+      <div class="piano-container">
+        <div id="piano"></div>
+      </div>
+    </div>
+
+    <!-- Mixer Mode -->
+    <div class="mode-panel hidden" id="mixer-panel">
+      <div class="mixer-tracks">
+        <div class="mixer-channel">
+          <span class="mixer-channel-label" style="color: var(--track1)">T1</span>
+          <input type="range" class="mixer-fader" id="mixer-level-0" min="0" max="1" step="0.01" value="0.8">
+          <button class="track-btn" id="track-mute-0">M</button>
+        </div>
+        <div class="mixer-channel">
+          <span class="mixer-channel-label" style="color: var(--track2)">T2</span>
+          <input type="range" class="mixer-fader" id="mixer-level-1" min="0" max="1" step="0.01" value="0.8">
+          <button class="track-btn" id="track-mute-1">M</button>
+        </div>
+        <div class="mixer-channel">
+          <span class="mixer-channel-label" style="color: var(--track3)">T3</span>
+          <input type="range" class="mixer-fader" id="mixer-level-2" min="0" max="1" step="0.01" value="0.8">
+          <button class="track-btn" id="track-mute-2">M</button>
+        </div>
+        <div class="mixer-channel">
+          <span class="mixer-channel-label" style="color: var(--track4)">T4</span>
+          <input type="range" class="mixer-fader" id="mixer-level-3" min="0" max="1" step="0.01" value="0.8">
+          <button class="track-btn" id="track-mute-3">M</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
 </body>
-</html> 
+</html>

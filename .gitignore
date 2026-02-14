@@ -1,0 +1,7 @@
+.env
+.env.*
+node_modules/
+dist/
+.claude/settings.local.json
+CLAUDE.local.md
+.pnpmrc.json
